@@ -26,7 +26,7 @@ public class ProductAnalyzer {
     public static void main(String[] args) throws IOException {
         String filename = "src/main/resources/dataset/test-task_dataset_summer_products.csv";
 
-        //get map containing
+        //get map containing index of table column and its name
         Map<String, Integer> indexByColumnName = getIndexByColumnNameMap(filename);
 
         //reading file
