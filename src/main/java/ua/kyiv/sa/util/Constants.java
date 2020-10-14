@@ -10,4 +10,6 @@ public class Constants {
     public static final String RATING_COUNT_COLUMN_NAME = "rating_count";
     public static final String RATING_FIVE_COUNT_COLUMN_NAME = "rating_five_count";
 
+    public static final String FILEPATH = "src/main/resources/dataset/test-task_dataset_summer_products.csv";
+
 }
