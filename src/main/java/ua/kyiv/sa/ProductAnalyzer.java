@@ -2,17 +2,22 @@ package ua.kyiv.sa;
 
 
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvValidationException;
 import ua.kyiv.sa.collector.ProductCollector;
 import ua.kyiv.sa.factory.ProductFactory;
 import ua.kyiv.sa.model.Product;
 import ua.kyiv.sa.model.ProductResult;
+import ua.kyiv.sa.util.Constants;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -24,24 +29,23 @@ import static java.util.stream.Collectors.toMap;
 public class ProductAnalyzer {
 
     public static void main(String[] args) throws IOException {
-        String filename = "src/main/resources/dataset/test-task_dataset_summer_products.csv";
 
         //get map containing index of table column and its name
-        Map<String, Integer> indexByColumnName = getIndexByColumnNameMap(filename);
+        Map<String, Integer> indexByColumnName = getIndexByColumnNameMap(Constants.FILEPATH);
 
         //reading file
-        CSVReader reader = new CSVReader(new FileReader(filename));
-
-        //setup reader to skip the first line of the file (already read)
-        reader.skip(1);
+        CSVReader reader = new CSVReaderBuilder(new FileReader(Constants.FILEPATH))
+                //setup reader to skip the first line of the file (already read)
+                .withSkipLines(1)
+                .build();
 
         Map<String, ProductResult> result = Stream
-
                 //read file line by line
-                .iterate(new String[]{}, Objects::nonNull, readLine(reader))
+                .iterate(Optional.of(new String[]{}), Optional::isPresent, readLine(reader))
+                .flatMap(Optional::stream)
 
                 //remove lines without values
-                .filter(x -> x != null && x.length > 0)
+                .filter(x -> x.length > 0)
 
                 //create model required for further calculations
                 .map(x -> ProductFactory.fromParsedString(x, indexByColumnName))
@@ -68,7 +72,11 @@ public class ProductAnalyzer {
                                 LinkedHashMap::new));
 
 
-        printReport(result);
+        if (result.size() > 0) {
+            printReport(result);
+        } else {
+            System.out.println("No results");
+        }
 
     }
 
@@ -86,26 +94,27 @@ public class ProductAnalyzer {
                 .collect(toMap(headers::get, i -> i));
     }
 
-    private static UnaryOperator<String[]> readLine(CSVReader reader) {
+    private static UnaryOperator<Optional<String[]>> readLine(CSVReader reader) {
         return x -> {
             String[] nextLine;
             try {
                 nextLine = reader.readNext();
-                return nextLine;
+                return Optional.ofNullable(nextLine);
             } catch (IOException | CsvValidationException e) {
-                e.printStackTrace();
+                System.err.println("Exception while reading from file" + e);
             }
-            return null;
+            return Optional.empty();
         };
     }
 
 
     private static void printReport(Map<String, ProductResult> result) {
-        System.out.println("=======================================================================");
-        System.out.println(String.format("|   %10s   ||   %10s   ||   %20s   |", "Country", "AvgPrice", "Share of five-star products"));
-        System.out.println("=======================================================================");
-        result.forEach((key, value) -> System.out.println(String.format("|       %2s       ||   %10s   ||   %20s          |",
+        String border = "=================================================================================";
+        System.out.println(border);
+        System.out.println(String.format("|   %10s   ||   %20s   ||   %20s   |", "Country", "AvgPrice", "Share of five-star products"));
+        System.out.println(border);
+        result.forEach((key, value) -> System.out.println(String.format("|       %2s       ||   %20s   ||   %20s          |",
                 key, value.getAvgPrice(), value.getFiveStarsShare())));
-        System.out.println("=======================================================================");
+        System.out.println(border);
     }
 }

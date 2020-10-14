@@ -23,8 +23,10 @@ public class ProductCollector implements Collector<Product, ProductAccumulator, 
     @Override
     public BiConsumer<ProductAccumulator, Product> accumulator() {
         return (a, p) -> {
-            a.setProductsCount(a.getProductsCount() + 1);
-            a.setTotalPrice(a.getTotalPrice().add(p.getPrice()));
+            if (p.getPrice() != null) {
+                a.setProductsCount(a.getProductsCount() + 1);
+                a.setTotalPrice(a.getTotalPrice().add(p.getPrice()));
+            }
             a.setTotalRatingCount(a.getTotalRatingCount() + p.getRatingCount());
             a.setTotalRatingFiveCount(a.getTotalRatingFiveCount() + p.getRatingFiveCount());
         };
@@ -45,7 +47,7 @@ public class ProductCollector implements Collector<Product, ProductAccumulator, 
         return accumulator -> {
             ProductResult productResult = new ProductResult();
             productResult.setAvgPrice(MathUtils.safeDivideBigDecimals(accumulator.getTotalPrice(), BigDecimal.valueOf(accumulator.getProductsCount())));
-            productResult.setFiveStarsShare(MathUtils.safeDivideLongs(accumulator.getTotalRatingFiveCount(), accumulator.getTotalRatingCount()).multiply(new BigDecimal("100")));
+            productResult.setFiveStarsShare(MathUtils.getPercentage(accumulator.getTotalRatingFiveCount(), accumulator.getTotalRatingCount()));
             return productResult;
         };
     }

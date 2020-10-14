@@ -19,11 +19,11 @@ public class ProductFactory {
             return Optional.of(
                     new Product(
                             parsedLine[indexByColumnName.get(Constants.COUNTRY_COLUMN_NAME)],
-                            StringUtils.isNotBlank(price) ? new BigDecimal(price) : BigDecimal.ZERO,
+                            StringUtils.isNotBlank(price) ? new BigDecimal(price) : null,
                             StringUtils.isNotBlank(ratingCount) ? Long.parseLong(ratingCount) : 0L,
                             StringUtils.isNotBlank(ratingFiveCount) ? Long.parseLong(ratingFiveCount) : 0L));
         } catch (Exception e) {
-            System.out.println("Cannot parse some values in array - " + Arrays.toString(parsedLine) + ", " + e);
+            System.err.println("Cannot parse some values in array - " + Arrays.toString(parsedLine) + ", " + e);
         }
         return Optional.empty();
     }
